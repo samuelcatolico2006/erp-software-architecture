@@ -17,7 +17,6 @@ El siguiente diagrama muestra la interacción entre los componentes del sistema 
 
 ![Diagrama de Secuencia - Registrar Producto](./images/Diagrama%20UML.png)
 
-*Código fuente disponible en: [./diagrams/Diagrama UML.puml](./diagrams/Diagrama%20UML.puml)*
 
 ### Explicación del Flujo
 
