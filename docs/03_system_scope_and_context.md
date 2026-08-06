@@ -16,7 +16,7 @@ El **Módulo de Compras** interactúa con diversos actores externos e internos e
 
 ### Diagrama de Contexto (C1)
 
-![Diagrama de Contexto](./images/c1_context.png)
+![Diagrama de Contexto](./images/C1.png)
 
 ### Explicación del Diagrama
 
@@ -40,4 +40,22 @@ El **Módulo de Compras** actúa como un sistema central que coordina las adquis
 
 ## Contexto Técnico
 
-### Diagrama de Contexto Técnico
+### Especificaciones Técnicas
+
+| Componente | Tecnología | Propósito |
+|------------|------------|-----------|
+| **API Gateway** | Spring Cloud Gateway | Enrutamiento, autenticación, rate limiting |
+| **Microservicio** | Spring Boot 3.x | Lógica de negocio del módulo |
+| **Base de Datos** | PostgreSQL 15 | Persistencia de datos |
+| **Frontend** | React + TypeScript | Interfaz de usuario |
+| **Cache** | Redis (opcional) | Caché de consultas frecuentes |
+| **Mensajería** | RabbitMQ (futuro) | Eventos asíncronos |
+
+### Protocolos de Comunicación
+
+| Canal | Protocolo | Formato |
+|-------|-----------|---------|
+| **Frontend ↔ Backend** | HTTPS | JSON |
+| **Backend ↔ Base de Datos** | JDBC | SQL |
+| **Backend ↔ Otros Servicios** | HTTPS (REST) | JSON |
+| **Backend ↔ Sistema de Finanzas** | HTTPS (REST) | JSON |
