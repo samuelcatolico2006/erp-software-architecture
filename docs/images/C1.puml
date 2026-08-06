@@ -1,0 +1,10 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+Person(admin, "Administrador de Compras", "Usuario que gestiona productos y proveedores.")
+System(erp, "Sistema ERP", "Gestiona los procesos de negocio de la empresa.")
+System_Ext(accounting_system, "Sistema Contable Externo", "Sistema para la contabilidad y finanzas.")
+
+Rel(admin, erp, "Registra productos y proveedores")
+Rel(erp, accounting_system, "Envía datos de facturas y asientos contables")
+@enduml
