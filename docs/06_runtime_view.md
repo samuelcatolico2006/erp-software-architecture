@@ -4,117 +4,131 @@
 
 ### Descripción del Escenario
 
-El usuario "Gestor de Inventario" desea agregar un nuevo producto al catálogo del sistema. Este es uno de los escenarios más críticos porque:
-1. Es el punto de entrada para toda la gestión de compras
-2. Requiere validaciones estrictas para garantizar la integridad de datos
-3. Debe ser rápido y eficiente para no interrumpir el flujo de trabajo
+El **Gestor de Inventario** desea agregar un nuevo producto al catálogo del sistema para mantenerlo actualizado y disponible para futuras órdenes de compra. Este escenario es crítico porque:
 
-### Flujo de Secuencia
+1. **Es el punto de entrada** para toda la gestión de compras
+2. **Requiere validaciones estrictas** para garantizar la integridad de los datos
+3. **Debe ser rápido y eficiente** para no interrumpir el flujo de trabajo del usuario
+4. **Impacta directamente** en la calidad del catálogo de productos
 
-![Diagrama de Secuencia - Registrar Producto](./images/registrar_producto.png)
+### Diagrama de Secuencia UML
 
-### Explicación del Flujo
+```plantuml
+@startuml
+title "Diagrama de Secuencia - Registrar Nuevos Productos (HU-01)"
 
-#### 1. Solicitud del Usuario
-El Gestor de Inventario accede a la pantalla de registro de productos, completa el formulario con:
-- Nombre del producto (obligatorio)
-- Descripción (obligatoria)
-- Unidad de medida (obligatoria)
-- Proveedor (opcional)
-- Categoría (opcional)
+' Definición de actores y componentes
+actor "Gestor de Inventario" as Usuario
+participant "Interfaz de Usuario\n(UI)" as UI
+participant "Controlador de\nProductos" as Controlador
+participant "Servicio de\nProductos" as Servicio
+participant "Repositorio de\nProductos" as Repositorio
+participant "Validador de\nDatos" as Validador
+database "Base de Datos" as BD
 
-#### 2. Validación Frontend
-React realiza validaciones básicas en el cliente:
-- Verifica que los campos obligatorios no estén vacíos
-- Valida el formato de los datos
-- Deshabilita el botón de guardar si hay errores
+' === FLUJO 1: Registro exitoso (Criterio 1) ===
+== Registro exitoso (Criterio 1) ==
+Usuario -> UI: Accede a pantalla de registro
+activate UI
 
-#### 3. Envío de Datos
-Al hacer clic en "Guardar", el frontend envía una solicitud POST al endpoint `/api/productos` con los datos en formato JSON.
+UI --> Usuario: Muestra formulario vacío
+deactivate UI
 
-#### 4. Procesamiento Backend
-El Microservicio de Compras:
-1. **Valida los datos** (Spring Validation)
-   - Verifica que `nombre` no sea null o vacío
-   - Verifica que `descripcion` no sea null
-   - Verifica que `unidad` no sea null o vacío
-   - Verifica que el proveedor exista (si se proporciona)
+Usuario -> UI: Completa todos los datos\ny hace clic en "Guardar"
+activate UI
 
-2. **Procesa el producto**
-   - Asigna fecha de creación
-   - Establece estado inicial = "Activo"
-   - Genera código de producto (opcional)
+UI -> Controlador: registrarProducto(datosProducto)
+activate Controlador
 
-3. **Persiste en Base de Datos**
-   - Ejecuta INSERT en tabla `productos`
-   - Retorna el ID generado
+Controlador -> Validador: validarDatos(datosProducto)
+activate Validador
 
-#### 5. Registro de Auditoría
-Se registra la acción en la tabla `bitacora`:
-- Usuario que registró
-- Producto registrado
-- Fecha y hora
-- Acción: "REGISTRO_PRODUCTO"
+Validador --> Controlador: Datos válidos
+deactivate Validador
 
-#### 6. Respuesta al Frontend
-El backend responde con:
-- Código 201 Created
-- Datos del producto registrado (incluyendo ID)
-- Mensaje de éxito
+Controlador -> Servicio: crearProducto(datosProducto)
+activate Servicio
 
-#### 7. Actualización de UI
-El frontend:
-- Muestra mensaje de éxito al usuario
-- Actualiza la lista de productos (o redirige al catálogo)
-- Limpia el formulario
+Servicio -> Repositorio: save(producto)
+activate Repositorio
 
-### Consideraciones de Rendimiento
+Repositorio -> BD: INSERT INTO productos\n(nombre, descripcion, unidad)
+activate BD
+BD --> Repositorio: ID del producto generado
+deactivate BD
 
-| Aspecto | Métrica | Observación |
-|---------|---------|-------------|
-| **Tiempo de respuesta** | < 500 ms | Objetivo de rendimiento |
-| **Transacciones** | ACID | Garantiza integridad de datos |
-| **Concurrencia** | Hasta 100 usuarios simultáneos | Escalabilidad horizontal |
+Repositorio --> Servicio: Producto guardado\ncon ID asignado
+deactivate Repositorio
 
-### Manejo de Errores
+Servicio --> Controlador: Producto registrado
+deactivate Servicio
 
-| Caso de Error | Respuesta del Sistema |
-|---------------|----------------------|
-| **Nombre vacío** | HTTP 400, mensaje: "El nombre es obligatorio" |
-| **Nombre duplicado** | HTTP 409, mensaje: "El producto ya existe" |
-| **Proveedor no existe** | HTTP 404, mensaje: "Proveedor no encontrado" |
-| **Error de BD** | HTTP 500, mensaje: "Error interno del servidor" |
-| **Timeout** | HTTP 504, mensaje: "Tiempo de espera agotado" |
+Controlador --> UI: Confirmación: "Producto guardado"
+deactivate Controlador
 
-### Ejemplo de Solicitud y Respuesta
+UI --> Usuario: Muestra mensaje de éxito:\n"Producto registrado correctamente"
+deactivate UI
 
-**Solicitud (Frontend → Backend):**
-```http
-POST /api/productos
-Content-Type: application/json
-Authorization: Bearer <jwt_token>
+' === FLUJO 2: Validación de campo obligatorio (Criterio 2) ===
+== Validación de campo obligatorio (Criterio 2) ==
+Usuario -> UI: Accede a pantalla de registro
+activate UI
 
-{
-  "nombre": "Laptop Dell XPS 13",
-  "descripcion": "Laptop ultrabook con procesador Intel i7",
-  "unidad": "unidad",
-  "idProveedor": 5,
-  "idCategoria": 3,
-  "precioCompra": 3500000
-}
+UI --> Usuario: Muestra formulario vacío
+deactivate UI
 
-###Respuesta exitosa
-HTTP 201 Created
-Content-Type: application/json
+Usuario -> UI: Deja campo "Nombre" vacío,\ncompleta los demás campos\ny hace clic en "Guardar"
+activate UI
 
-{
-  "id": 1024,
-  "nombre": "Laptop Dell XPS 13",
-  "descripcion": "Laptop ultrabook con procesador Intel i7",
-  "unidad": "unidad",
-  "idProveedor": 5,
-  "idCategoria": 3,
-  "precioCompra": 3500000,
-  "estado": "Activo",
-  "fechaCreacion": "2025-08-04T10:30:00Z"
-}
+UI -> Controlador: registrarProducto(datosProducto)
+activate Controlador
+
+Controlador -> Validador: validarDatos(datosProducto)
+activate Validador
+
+note right of Validador
+  Detección de error:
+  El campo "Nombre" está vacío
+end note
+
+Validador --> Controlador: Error: "El nombre es obligatorio"
+deactivate Validador
+
+Controlador --> UI: Error de validación
+deactivate Controlador
+
+UI --> Usuario: Muestra mensaje de error:\n"El campo Nombre es obligatorio"\ny no guarda el producto
+deactivate UI
+
+' === FLUJO 3: Verificación en catálogo (Criterio 3) ===
+== Verificación en catálogo (Criterio 3) ==
+Usuario -> UI: Consulta el listado de productos
+activate UI
+
+UI -> Controlador: obtenerTodosLosProductos()
+activate Controlador
+
+Controlador -> Servicio: listarProductos()
+activate Servicio
+
+Servicio -> Repositorio: findAll()
+activate Repositorio
+
+Repositorio -> BD: SELECT * FROM productos
+activate BD
+BD --> Repositorio: Lista completa de productos\n(incluye el nuevo)
+deactivate BD
+
+Repositorio --> Servicio: Lista<Producto>
+deactivate Repositorio
+
+Servicio --> Controlador: Lista<Producto>
+deactivate Servicio
+
+Controlador --> UI: Lista<Producto> actualizada
+deactivate Controlador
+
+UI --> Usuario: Muestra el listado con\nel nuevo producto disponible
+deactivate UI
+
+@enduml
